@@ -29,6 +29,13 @@ uint16_t co2;
 float temp;
 float humidity;
 
+uint16_t co2_min=9999;
+uint16_t co2_max=0;
+uint16_t co2_overall_max=0;
+
+uint32_t co2_sum=0;
+uint8_t  co2_count=0;
+
 Scheduler runner;
 Task *update;
 void updater();
@@ -64,9 +71,26 @@ void getco2(){
    message+=String(temp);
    message+="\t";
    message+=String(humidity);
+   message+="\t";
+   message+=String(co2_overall_max);
+   message+="\t";
+   message+=String(co2_min);
+   message+="\t";
+   message+=String(co2_max);
+   message+="\t";
+   message+=String(co2_sum/co2_count);
+   message+="\t";
+   message+=String(co2_count);
+   message+="\t";
+   message+=String(millis()/1000/60);
    message+="\n";
 
     server.send(200, "text/plain", message);
+
+    co2_min=9999;
+    co2_max=0;
+    co2_sum=co2;
+    co2_count=1;
 
 }
 
@@ -147,6 +171,22 @@ void updater()
   co2=mySensor.getCO2();
   temp=mySensor.getTemperature();
   humidity=mySensor.getHumidity();
+
+  if (co2<co2_min)
+     co2_min=co2;
+  if (co2>co2_max)
+     co2_max=co2;
+
+  if (co2>co2_overall_max)
+     co2_overall_max=co2;
+
+  if(co2_count<10000){
+        co2_sum+=co2;
+        co2_count++;
+  } else {
+      co2_sum=co2;
+      co2_count=1;
+  }
 
   update_display();
 
